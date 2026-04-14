@@ -5,16 +5,18 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { mockMentors, mockBookings, mockFeedback, mockCurrentStudent, type Mentor } from '../data/mockData';
+import { mockMentors, mockBookings, mockFeedback, type Mentor } from '../data/mockData';
 import { MentorProfileModal } from './MentorProfileModal';
 import { BookingFlow } from './BookingFlow';
 import { FeedbackModal } from './FeedbackModal';
+import {StudentProfile} from '../types/user'
 
 interface StudentDashboardProps {
   onViewChange: (view: string) => void;
+  userProfile: StudentProfile;
 }
 
-export function StudentDashboard({ onViewChange }: StudentDashboardProps) {
+export function StudentDashboard({ onViewChange , userProfile }: StudentDashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [bookingMentor, setBookingMentor] = useState<Mentor | null>(null);
@@ -25,7 +27,7 @@ export function StudentDashboard({ onViewChange }: StudentDashboardProps) {
     mentor.expertise.some((exp) => exp.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const upcomingSessions = mockBookings.filter(b => b.studentId === mockCurrentStudent.id && b.status !== 'completed');
+  const upcomingSessions = mockBookings.filter(b => b.studentId === userProfile.id && b.status !== 'completed');
   const completedSessions = mockFeedback.length;
 
   return (
@@ -52,11 +54,11 @@ export function StudentDashboard({ onViewChange }: StudentDashboardProps) {
               </Button>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{mockCurrentStudent.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{userProfile.name}</p>
                   <p className="text-xs text-gray-500">Student</p>
                 </div>
                 <Avatar>
-                  <AvatarImage src={mockCurrentStudent.photo} alt={mockCurrentStudent.name} />
+                  <AvatarImage src={userProfile.photo} alt={userProfile.name} />
                   <AvatarFallback>JP</AvatarFallback>
                 </Avatar>
               </div>
@@ -69,7 +71,7 @@ export function StudentDashboard({ onViewChange }: StudentDashboardProps) {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-semibold text-gray-900 mb-2">
-            Welcome back, {mockCurrentStudent.name.split(' ')[0]}! 👋
+            Welcome back, {userProfile.name.split(' ')[0]}! 👋
           </h2>
           <p className="text-gray-600">Ready to learn something new today?</p>
         </div>

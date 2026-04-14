@@ -1,29 +1,24 @@
-import React, { useState } from 'react';
-import { Mail, Lock, Smartphone, Chrome } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Separator } from './ui/separator';
+import { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+import { Button } from "./ui/button";
+import { GoogleProfile } from "./OnboardingForm";
+type Role = "student" | "mentor";
 
 interface AuthScreenProps {
-  onLogin: (role: 'student' | 'mentor') => void;
+  onLogin: (
+    role: Role,
+    isNewUser: boolean,
+    googleProfile: GoogleProfile
+  ) => void;
 }
 
 export function AuthScreen({ onLogin }: AuthScreenProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [activeRole, setActiveRole] = useState<Role>("student");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError('Please enter both email and password');
-      return;
-    }
-    // Demo: student@email.com logs in as student, mentor@email.com as mentor
-    const role = email.includes('mentor') ? 'mentor' : 'student';
-    onLogin(role);
-  };
+  const isStudent = activeRole === "student";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
@@ -45,117 +40,108 @@ export function AuthScreen({ onLogin }: AuthScreenProps) {
               />
             </svg>
           </div>
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">MentorConnect</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+            MentorConnect
+          </h1>
           <p className="text-gray-600">Sign in to your account</p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-          <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError('');
-                  }}
-                  className="pl-11"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError('');
-                  }}
-                  className="pl-11"
-                />
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-                {error}
-              </div>
-            )}
-
-            {/* Forgot Password */}
-            <div className="flex justify-end">
-              <button type="button" className="text-sm text-indigo-600 hover:text-indigo-700">
-                Forgot password?
-              </button>
-            </div>
-
-            {/* Submit Button */}
-            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
-              Sign In
-            </Button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-gray-500">
-              Or continue with
-            </span>
+          {/* Role Toggler */}
+          <div className="relative flex bg-gray-100 rounded-xl p-1 mb-6">
+            <div
+              className="absolute top-1 bottom-1 bg-indigo-600 rounded-lg shadow-sm transition-all duration-300 ease-in-out"
+              style={{
+                width: "calc(50% - 4px)",
+                transform: isStudent
+                  ? "translateX(4px)"
+                  : "translateX(calc(100% + 4px))",
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setActiveRole("student")}
+              className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-colors duration-200 ${
+                isStudent ? "text-white" : "text-gray-500"
+              }`}
+            >
+              <span>🎓</span> Student
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveRole("mentor")}
+              className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-lg transition-colors duration-200 ${
+                !isStudent ? "text-white" : "text-gray-500"
+              }`}
+            >
+              <span>🧑‍🏫</span> Mentor
+            </button>
           </div>
 
-          {/* Social Login */}
-          <div className="space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => onLogin('student')}
-            >
-              <Chrome className="w-5 h-5 mr-2" />
-              Sign in with Google
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => onLogin('student')}
-            >
-              <Smartphone className="w-5 h-5 mr-2" />
-              Sign in with Mobile OTP
-            </Button>
-          </div>
-
-          {/* Demo Hint */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              <strong>Demo:</strong> Use "student@email.com" for Student view or "mentor@email.com" for Mentor view. Any password works.
+          {/* Context hint */}
+          <div className="flex items-start gap-2.5 bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-3 mb-6">
+            <div
+              className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${
+                isStudent ? "bg-green-500" : "bg-amber-500"
+              }`}
+            />
+            <p className="text-sm text-gray-500 leading-snug">
+              {isStudent
+                ? "Sign in as a Student to explore sessions and connect with mentors."
+                : "Sign in as a Mentor to manage your profile and guide learners."}
             </p>
           </div>
-        </div>
 
-        {/* Sign Up Link */}
-        <p className="text-center mt-6 text-sm text-gray-600">
-          Don't have an account?{' '}
-          <button className="text-indigo-600 hover:text-indigo-700 font-medium">
-            Sign up
-          </button>
-        </p>
+          {/* Error message */}
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              {error}
+            </div>
+          )}
+          <div className="flex items-center justify-center">
+            <GoogleLogin
+              onSuccess={(credentialResponse) => {
+                if (!credentialResponse.credential) {
+                  setError("Login failed. No credential received.");
+                  return;
+                }
+
+                try {
+                  const decoded: any = jwtDecode(credentialResponse.credential);
+
+                  const googleProfile = {
+                    name: decoded.name,
+                    email: decoded.email,
+                    picture: decoded.picture,
+                  };
+                  console.log("Google Profile:", googleProfile);
+                  console.log("Selected Role:", activeRole);
+                  console.log(decoded);
+
+                  setIsLoading(false);
+                  onLogin(activeRole, true, googleProfile);
+                } catch (err) {
+                  console.error(err);
+                  setError("Failed to decode token");
+                }
+              }}
+              onError={() => {
+                setError("Google Login Failed");
+                setIsLoading(false);
+              }}
+            />
+          </div>
+          {/* Role confirm */}
+          <p className="text-center text-xs text-gray-400 mt-3">
+            Signing in as{" "}
+            <span
+              className={`font-semibold ${isStudent ? "text-green-600" : "text-amber-600"}`}
+            >
+              {isStudent ? "Student" : "Mentor"}
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -9,8 +9,12 @@ import { mockBookings, mockFeedback, mockCurrentMentor, mockMentors } from '../d
 import { AvailabilityCalendar } from './AvailabilityCalendar';
 import { BookingManagement } from './BookingManagement';
 import { SessionHistory } from './SessionHistory';
+import {MentorProfile} from '../types/user'
 
-export function MentorDashboard() {
+interface MentorDashboardProps {
+  userProfile: MentorProfile;
+}
+export function MentorDashboard({ userProfile }: MentorDashboardProps){
   const [activeTab, setActiveTab] = useState('availability');
   
   const mentorBookings = mockBookings.filter(b => b.mentorId === mockCurrentMentor.id);
